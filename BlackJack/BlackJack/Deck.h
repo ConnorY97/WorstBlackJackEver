@@ -27,6 +27,8 @@ public:
 
 	void gameLoop(); 
 
+	void emptyHand(std::vector<Card*>& a_hand);
+
 
 
 private:

@@ -97,26 +97,8 @@ Deck::~Deck()
 {
 	for (size_t i = 0; i < DECKSIZE; i++)
 	{
-		if (deck[i] != nullptr)
-		{
-			delete deck[i];
-			deck[i] = nullptr;
-		}
-		if (discardPile[i] != nullptr)
-		{
-			delete discardPile[i];
-			discardPile[i] = nullptr;
-		}
-		if (playersHand[i] != nullptr)
-		{
-			delete playersHand[i];
-			playersHand[i] = nullptr;
-		}
-		if (houseHand[i] != nullptr)
-		{
-			delete houseHand[i];
-			houseHand[i] = nullptr;
-		}
+		delete deck[i];
+		deck[i] = nullptr;
 	}
 }
 
@@ -165,7 +147,6 @@ void Deck::dealPlayer()
 	{
 		playersHand.push_back(deck[deck.size() - 1]);
 		discardPile.push_back(deck[deck.size() - 1]);
-		deck.pop_back(); 
 	}
 	else
 	{
@@ -311,48 +292,85 @@ void Deck::clearScreen()
 	showHands();
 }
 
+void Deck::emptyHand(std::vector<Card*>& a_hand)
+{
+	/*int size = a_hand.size(); 
+	for (size_t i = 0; i < size - 1; i++)
+	{
+		discardPile.push_back(a_hand[i]);
+		delete a_hand[i];
+		a_hand[i] = nullptr; 
+		a_hand.erase(a_hand.begin()); 
+	}*/
+	for (size_t i = a_hand.size() - 1; i < -1; i--)
+	{
+		Card* temp = a_hand[i]; 
+		discardPile.push_back(temp);
+		delete a_hand[i];
+		a_hand[i] = nullptr;
+		a_hand.erase(a_hand.begin() + i);
+	}
+	
+}
+
 void Deck::gameLoop()
 {
 	shuffle();
-	dealHouse();
-	dealHouse();
-	dealPlayer();
-	dealPlayer();
-
-	clearScreen();
-	checkPlayer(); 
-	
-	while (!playerDone)
+	while (!gameOver)
 	{
+		dealHouse();
+		dealHouse();
+		dealPlayer();
+		dealPlayer();
+
 		clearScreen();
-		std::cin.clear(); 
-		std::cin.ignore(std::cin.rdbuf()->in_avail()); 
-		std::cout << "Would you like to be hit? "; 
-		std::cin >> playerInput;
-		switch (playerInput)
+		checkPlayer();
+
+		while (!playerDone)
 		{
-		case 'y':
-			dealPlayer();
 			clearScreen();
-			checkPlayer();
-			break;
-		case 'n':
-			playerDone = true;
-			break;
-		default:
-			break;
+			std::cin.clear();
+			std::cin.ignore(std::cin.rdbuf()->in_avail());
+			std::cout << "Would you like to be hit? ";
+			std::cin >> playerInput;
+			switch (playerInput)
+			{
+			case 'y':
+				dealPlayer();
+				clearScreen();
+				checkPlayer();
+				break;
+			case 'n':
+				playerDone = true;
+				break;
+			default:
+				break;
+			}
 		}
+		clearScreen();
+		if (!gameOver)
+			checkHouse();
+
+
+		if (playerWins)
+			std::cout << "CONGRATULATIONS YOU WON!\nWould you like to play again?" << std::endl;
+		else if (!playerWins)
+			std::cout << "Sorry you lost!\nWould you like to play again?" << std::endl;
+
+		std::cin.clear();
+		std::cin.ignore(std::cin.rdbuf()->in_avail());
+		std::cin >> playerInput;
+		if (playerInput == 'y')
+		{
+			gameOver = false;
+			emptyHand(playersHand);
+			emptyHand(houseHand);
+			playerDone = false; 
+			houseDone = false;
+		}
+		else if (playerInput == 'n')
+			gameOver = true;
 	}
-	clearScreen();
-	if (!gameOver)
-		checkHouse();
-
-
-	if (playerWins)
-		std::cout << "CONGRATULATIONS YOU WON!" << std::endl;
-	else if (!playerWins)
-		std::cout << "WELL SHIT, try again?" << std::endl;
-
-	gameOver = true; 
+	
 
 }
